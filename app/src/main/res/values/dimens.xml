@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_gutter">20dp</dimen>
+    <dimen name="window_shadow">6dp</dimen>
+    <dimen name="button_shadow">4dp</dimen>
+    <dimen name="border">3dp</dimen>
+    <dimen name="border_thin">2dp</dimen>
+    <dimen name="grid_cell">24dp</dimen>
+</resources>

@@ -1,0 +1,12 @@
+<resources>
+    <style name="Base.Theme.MyApplication" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/retro_teal</item>
+        <item name="colorAccent">@color/retro_orange</item>
+        <item name="android:windowBackground">@color/retro_bg</item>
+        <item name="android:textColor">@color/retro_text</item>
+        <item name="android:fontFamily">@font/pixel_font</item>
+        <item name="fontFamily">@font/pixel_font</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

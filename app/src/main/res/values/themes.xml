@@ -1,0 +1,80 @@
+<resources>
+    <style name="Base.Theme.MyApplication" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/retro_teal</item>
+        <item name="colorAccent">@color/retro_orange</item>
+        <item name="android:windowBackground">@color/retro_bg</item>
+        <item name="android:textColor">@color/retro_text</item>
+        <item name="android:fontFamily">@font/pixel_font</item>
+        <item name="fontFamily">@font/pixel_font</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+
+    <style name="Theme.MyApplication" parent="Base.Theme.MyApplication" />
+
+    <style name="PixelTitle">
+        <item name="android:fontFamily">@font/silkscreen_bold</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:textColor">@color/retro_text</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="RetroSubtitle">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/retro_text</item>
+    </style>
+
+    <style name="MonoLabel">
+        <item name="android:fontFamily">@font/pixel_font</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/retro_text</item>
+    </style>
+
+    <style name="RetroCaption">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/retro_text</item>
+    </style>
+
+    <style name="BitButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">46dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_btn_retro</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingRight">@dimen/button_shadow</item>
+        <item name="android:paddingBottom">@dimen/button_shadow</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/retro_text</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="WindowControl">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">14dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/retro_text</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="PhotoViewerDialog" parent="Theme.Material3.Light.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.65</item>
+        <item name="android:windowAnimationStyle">@style/PhotoViewerAnimation</item>
+        <item name="android:textColor">@color/retro_text</item>
+        <item name="android:fontFamily">@font/pixel_font</item>
+        <item name="fontFamily">@font/pixel_font</item>
+    </style>
+
+    <style name="PhotoViewerAnimation">
+        <item name="android:windowEnterAnimation">@anim/viewer_enter</item>
+        <item name="android:windowExitAnimation">@anim/viewer_exit</item>
+    </style>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:left="@dimen/window_shadow" android:top="@dimen/window_shadow">
+        <shape><solid android:color="@color/retro_border" /></shape>
+    </item>
+    <item android:right="@dimen/window_shadow" android:bottom="@dimen/window_shadow">
+        <shape>
+            <solid android:color="@color/retro_cream" />
+            <stroke android:width="@dimen/border" android:color="@color/retro_border" />
+        </shape>
+    </item>
+</layer-list>
