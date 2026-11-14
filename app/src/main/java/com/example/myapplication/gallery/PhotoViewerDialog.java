@@ -11,8 +11,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 
@@ -21,8 +21,6 @@ import com.example.myapplication.data.Memory;
 import com.example.myapplication.data.MemoryRepository;
 
 public class PhotoViewerDialog extends DialogFragment {
-    public static final String RESULT_CHANGED = "photo_viewer_changed";
-
     private static final String ARG_ID = "memory_id";
 
     private MemoryRepository repository;
@@ -75,8 +73,7 @@ public class PhotoViewerDialog extends DialogFragment {
         likeButton = view.findViewById(R.id.viewer_like);
 
         title.setText(memory.formatDate());
-        memory.loadInto(image, ImageView.ScaleType.FIT_CENTER);
-        matchImageRatio(image);
+        memory.loadInto(image, ImageView.ScaleType.FIT_CENTER, () -> matchImageRatio(image));
         showLike(memory.isFavorite());
 
         view.findViewById(R.id.viewer_root).setOnClickListener(v -> dismiss());
@@ -96,13 +93,14 @@ public class PhotoViewerDialog extends DialogFragment {
     }
 
     private void deletePhoto() {
-        boolean deleted = repository.delete(memoryId);
-        Toast.makeText(requireContext(), deleted ? R.string.deleted : R.string.delete_failed,
-                Toast.LENGTH_SHORT).show();
-        if (deleted) {
-            getParentFragmentManager().setFragmentResult(RESULT_CHANGED, Bundle.EMPTY);
-            dismiss();
-        }
+        repository.delete(memoryId, deleted -> {
+            boolean ok = Boolean.TRUE.equals(deleted);
+            if (getContext() != null) {
+                Toast.makeText(getContext(), ok ? R.string.deleted : R.string.delete_failed,
+                        Toast.LENGTH_SHORT).show();
+            }
+            if (ok && isAdded()) dismissAllowingStateLoss();
+        });
     }
 
     private static void matchImageRatio(ImageView image) {
@@ -114,10 +112,9 @@ public class PhotoViewerDialog extends DialogFragment {
     }
 
     private void toggleLike() {
-        Memory updated = repository.toggleFavorite(memoryId);
-        if (updated == null) return;
-        showLike(updated.isFavorite());
-        getParentFragmentManager().setFragmentResult(RESULT_CHANGED, Bundle.EMPTY);
+        repository.toggleFavorite(memoryId, updated -> {
+            if (updated != null && getView() != null) showLike(updated.isFavorite());
+        });
     }
 
     private void showLike(boolean liked) {

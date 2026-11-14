@@ -39,6 +39,7 @@ public class GalleryFragment extends Fragment {
     private TextView footer;
     private GridLayoutManager layoutManager;
     private MemoryAdapter adapter;
+    private final MemoryRepository.Listener albumListener = this::refresh;
 
     @Nullable
     @Override
@@ -74,9 +75,6 @@ public class GalleryFragment extends Fragment {
                 openViewer(memory);
             }
         });
-
-        getChildFragmentManager().setFragmentResultListener(PhotoViewerDialog.RESULT_CHANGED,
-                getViewLifecycleOwner(), (key, result) -> refresh());
         layoutManager = new GridLayoutManager(requireContext(), gridMode ? 2 : 1);
         RecyclerView list = view.findViewById(R.id.memory_list);
         list.setLayoutManager(layoutManager);
@@ -87,7 +85,14 @@ public class GalleryFragment extends Fragment {
         toggleLayout.setOnClickListener(v -> setGridMode(!gridMode));
 
         setGridMode(gridMode);
+        repository.addListener(albumListener);
         refresh();
+    }
+
+    @Override
+    public void onDestroyView() {
+        repository.removeListener(albumListener);
+        super.onDestroyView();
     }
 
     @Override
@@ -124,16 +129,16 @@ public class GalleryFragment extends Fragment {
     }
 
     private void onMemoryClicked(Memory memory) {
-        Memory updated = repository.toggleFavorite(memory.getId());
-        if (updated != null) {
-            Toast.makeText(requireContext(),
+        repository.toggleFavorite(memory.getId(), updated -> {
+            if (updated == null || getContext() == null) return;
+            Toast.makeText(getContext(),
                     updated.isFavorite() ? R.string.added_favorite : R.string.removed_favorite,
                     Toast.LENGTH_SHORT).show();
-        }
-        refresh();
+        });
     }
 
     private void refresh() {
+        if (getView() == null) return;
         int total = repository.size();
         int favorites = repository.favoriteCount();
         List<Memory> items = favoritesOnly ? repository.getFavorites() : repository.getAll();
@@ -149,7 +154,7 @@ public class GalleryFragment extends Fragment {
                 ? getResources().getQuantityString(R.plurals.gallery_footer_fav, favorites, favorites)
                 : getResources().getQuantityString(R.plurals.gallery_footer_all, total, total));
         emptyText.setText(favoritesOnly ? R.string.gallery_empty_fav : R.string.gallery_empty_all);
-        emptyText.setVisibility(items.isEmpty() ? View.VISIBLE : View.GONE);
+        emptyText.setVisibility(repository.isLoaded() && items.isEmpty() ? View.VISIBLE : View.GONE);
     }
 
     private static void styleTab(TextView tab, boolean selected) {

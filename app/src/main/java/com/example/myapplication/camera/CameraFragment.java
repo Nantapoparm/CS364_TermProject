@@ -62,6 +62,8 @@ public class CameraFragment extends Fragment {
     private static final long FREEZE_MS = 800;
 
     private MemoryRepository repository;
+    private final MemoryRepository.Listener albumListener = this::refreshAlbumInfo;
+    private int pendingSaves;
 
     private int bitIndex = 1;
     private volatile Pixelator.Style style = STYLES[1];
@@ -153,6 +155,7 @@ public class CameraFragment extends Fragment {
         PhotoViews.showPlaceholder(viewfinderImage);
         selectBit(bitIndex);
         updateZoomLabel();
+        repository.addListener(albumListener);
         refreshAlbumInfo();
         startLiveBlink();
     }
@@ -184,6 +187,7 @@ public class CameraFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+        repository.removeListener(albumListener);
         stopCamera();
         cameraExecutor.shutdown();
         if (blink != null) blink.cancel();
@@ -384,24 +388,24 @@ public class CameraFragment extends Fragment {
             toast(hasCameraPermission() ? R.string.camera_not_ready : R.string.camera_permission_needed);
             return;
         }
-        if (repository.isFull()) {
-            toast(R.string.album_full);
-            return;
-        }
-        Memory saved = repository.addPhoto(shot);
-        if (saved == null) {
-            toast(R.string.save_failed);
+        if (!repository.isLoaded() || repository.size() + pendingSaves >= MemoryRepository.MAX_MEMORIES) {
+            toast(repository.isLoaded() ? R.string.album_full : R.string.camera_not_ready);
             return;
         }
 
         frozenUntil = SystemClock.uptimeMillis() + FREEZE_MS;
         PhotoViews.show(viewfinderImage, shot);
         playFlash();
-        refreshAlbumInfo();
-        toast(R.string.saved_to_album);
+
+        pendingSaves++;
+        repository.addPhoto(shot, saved -> {
+            pendingSaves--;
+            toast(saved != null ? R.string.saved_to_album : R.string.save_failed);
+        });
     }
 
     private void refreshAlbumInfo() {
+        if (getView() == null) return;
         shotCounter.setText(getString(R.string.shot_counter,
                 repository.size(), MemoryRepository.MAX_MEMORIES));
         Memory latest = repository.getLatest();

@@ -5,7 +5,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.example.myapplication.R;
 import com.example.myapplication.ui.PhotoViews;
 
 import java.text.SimpleDateFormat;
@@ -49,7 +51,22 @@ public final class Memory {
     }
 
     public void loadInto(@NonNull ImageView view, @NonNull ImageView.ScaleType scaleType) {
-        Bitmap image = MemoryRepository.get(view.getContext()).loadImage(id);
+        loadInto(view, scaleType, null);
+    }
+
+    public void loadInto(@NonNull ImageView view, @NonNull ImageView.ScaleType scaleType,
+                         @Nullable Runnable onShown) {
+        view.setTag(R.id.tag_memory_id, id);
+        view.setImageDrawable(null);
+        MemoryRepository.get(view.getContext()).loadImage(id, image -> {
+            Object tag = view.getTag(R.id.tag_memory_id);
+            if (!(tag instanceof Long) || (Long) tag != id) return;
+            show(view, image, scaleType);
+            if (onShown != null) onShown.run();
+        });
+    }
+
+    private static void show(ImageView view, @Nullable Bitmap image, ImageView.ScaleType scaleType) {
         if (image != null && image.getWidth() > MAX_PIXEL_ART_WIDTH) {
             view.setScaleType(scaleType);
             view.setImageDrawable(new BitmapDrawable(view.getResources(), image));
