@@ -17,8 +17,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
- * Shows a small pixel photo enlarged and lets the user draw a loop around a person with a finger.
- * Lifting the finger closes the loop; {@link #cutOut()} returns only the pixels inside it.
+ * [ใหม่ - ฟีเจอร์อวาตาร์] View สำหรับใช้นิ้ววาดวงรอบตัวเพื่อตัดออกจากพื้นหลัง (ไม่ใช้ ML)
+ *
+ * <ul>
+ *   <li>แสดงรูปพิกเซลเล็ก ๆ ขยายเต็มช่อง ระหว่างลากนิ้วจะวาดเส้นประให้เห็น</li>
+ *   <li>ยกนิ้วแล้วปิดวงอัตโนมัติ และทำส่วนนอกวงให้มืดลงเพื่อดูว่าจะได้อะไร</li>
+ *   <li>{@link #cutOut()} เทสีวงลง mask ขนาดเท่ารูปพิกเซล ขอบจึงเป็นขั้นบันไดพิกเซลเอง
+ *       แล้วเก็บเฉพาะพิกเซลในวงและครอปให้พอดีตัว ถ้าวงเล็กเกินไปจะคืนค่า null</li>
+ * </ul>
  */
 public class LassoCutView extends View {
     public interface OnLassoListener {

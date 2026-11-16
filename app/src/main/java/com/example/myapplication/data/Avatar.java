@@ -4,7 +4,12 @@ import android.graphics.Bitmap;
 
 import androidx.annotation.NonNull;
 
-/** One row of the avatars table: the cut-out body. Legs and walk frames are rebuilt from code. */
+/**
+ * [ใหม่ - ฟีเจอร์อวาตาร์] ข้อมูล 1 แถวของตาราง {@code avatars} (คู่กับ {@link Memory} ของตาราง memories)
+ *
+ * <p>เก็บแค่ส่วนที่ตัดออกมาจากรูป (PNG โปร่งใส) ส่วนขาและเฟรมเดิน/กระโดดสร้างใหม่จากโค้ดใน
+ * {@code AvatarSprite} ทุกครั้งที่โหลด ทำให้ข้อมูลในฐานข้อมูลเล็ก
+ */
 public final class Avatar {
     private final long id;
     private final long createdAt;

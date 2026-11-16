@@ -18,8 +18,15 @@ import com.example.myapplication.data.Avatar;
 import java.util.Random;
 
 /**
- * Transparent layer over the album where the chibi avatar walks along the bottom edge.
- * Touches that miss the avatar return false, so they fall through to the photo cards below.
+ * [ใหม่ - ฟีเจอร์อวาตาร์] ชั้นโปร่งใสที่วางทับอัลบั้ม ให้ตัวละคร chibi เดินเล่นตามขอบล่าง
+ *
+ * <ul>
+ *   <li>เปลี่ยนเฟรมประมาณ 12 ครั้งต่อวินาที ให้ฟีลเกมพิกเซล</li>
+ *   <li>แตะโดนตัวละคร = กระโดด (แจ้ง {@link Listener#onAvatarJump()} ให้เล่นเสียงติ้ง)</li>
+ *   <li>กดค้าง = แจ้ง {@link Listener#onAvatarLongPress()} ให้ถามว่าจะลบไหม</li>
+ *   <li>แตะไม่โดนตัวละครจะคืนค่า false ทำให้การแตะทะลุไปถึงการ์ดรูปข้างล่าง</li>
+ *   <li>หยุด animation เองเมื่อซ่อนแท็บอัลบั้มหรือปิดจอ ({@link #onVisibilityAggregated}) เพื่อประหยัดแบต</li>
+ * </ul>
  *
  * <pre>
  * WALK ⇄ IDLE (stands still for a moment)

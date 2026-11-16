@@ -52,6 +52,7 @@ public final class MemoryRepository {
     private final List<Memory> memories = new ArrayList<>();
     private final List<Listener> listeners = new ArrayList<>();
     private boolean loaded;
+    /** [เพิ่ม - ฟีเจอร์อวาตาร์] อวาตาร์ตัวล่าสุดที่โชว์บนอัลบั้ม (null = ยังไม่มี) */
     @Nullable
     private Avatar avatar;
 
@@ -231,6 +232,8 @@ public final class MemoryRepository {
             });
         });
     }
+
+    // ===== [เพิ่ม - ฟีเจอร์อวาตาร์] CRUD ของตาราง avatars (ทำบน dbExecutor เดิม ไม่ทำบน main thread) =====
 
     /** The newest avatar, or null if none has been made yet. */
     @MainThread

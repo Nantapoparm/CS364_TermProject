@@ -85,6 +85,7 @@ public class PhotoViewerDialog extends DialogFragment {
         view.findViewById(R.id.viewer_avatar).setOnClickListener(v -> openAvatarCut());
     }
 
+    // [เพิ่ม - ฟีเจอร์อวาตาร์] ปุ่ม ★ Make avatar เปิดหน้าตัดรูป แล้วปิดหน้าดูรูปนี้
     private static final String TAG_AVATAR_CUT = "avatar_cut";
 
     private void openAvatarCut() {

@@ -44,6 +44,7 @@ public class GalleryFragment extends Fragment {
     private TextView footer;
     private GridLayoutManager layoutManager;
     private MemoryAdapter adapter;
+    // [เพิ่ม - ฟีเจอร์อวาตาร์] ตัวละครที่เดินบนอัลบั้ม + เสียงติ้งตอนกระโดด
     private AvatarView avatarView;
     private SoundPool soundPool;
     private int dingSoundId;
@@ -161,6 +162,8 @@ public class GalleryFragment extends Fragment {
                     Toast.LENGTH_SHORT).show();
         });
     }
+
+    // ===== [เพิ่ม - ฟีเจอร์อวาตาร์] เสียงตอนกระโดด และการลบอวาตาร์ =====
 
     /** Same 8-bit "ding" as the camera shutter, played when the avatar jumps. */
     private void loadDing() {
