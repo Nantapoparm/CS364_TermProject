@@ -17,6 +17,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.myapplication.R;
+import com.example.myapplication.avatar.AvatarCutDialog;
 import com.example.myapplication.data.Memory;
 import com.example.myapplication.data.MemoryRepository;
 
@@ -81,6 +82,16 @@ public class PhotoViewerDialog extends DialogFragment {
         view.findViewById(R.id.viewer_done).setOnClickListener(v -> dismiss());
         view.findViewById(R.id.viewer_delete).setOnClickListener(v -> confirmDelete());
         likeButton.setOnClickListener(v -> toggleLike());
+        view.findViewById(R.id.viewer_avatar).setOnClickListener(v -> openAvatarCut());
+    }
+
+    private static final String TAG_AVATAR_CUT = "avatar_cut";
+
+    private void openAvatarCut() {
+        if (getParentFragmentManager().findFragmentByTag(TAG_AVATAR_CUT) == null) {
+            AvatarCutDialog.newInstance(memoryId).show(getParentFragmentManager(), TAG_AVATAR_CUT);
+        }
+        dismiss();
     }
 
     private void confirmDelete() {

@@ -1,5 +1,7 @@
 package com.example.myapplication.gallery;
 
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,13 +12,16 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.R;
+import com.example.myapplication.data.Avatar;
 import com.example.myapplication.data.Memory;
 import com.example.myapplication.data.MemoryRepository;
+import com.example.myapplication.ui.AvatarView;
 import com.example.myapplication.ui.PixelFont;
 
 import java.util.List;
@@ -39,6 +44,9 @@ public class GalleryFragment extends Fragment {
     private TextView footer;
     private GridLayoutManager layoutManager;
     private MemoryAdapter adapter;
+    private AvatarView avatarView;
+    private SoundPool soundPool;
+    private int dingSoundId;
     private final MemoryRepository.Listener albumListener = this::refresh;
 
     @Nullable
@@ -63,6 +71,19 @@ public class GalleryFragment extends Fragment {
         toggleLayout = view.findViewById(R.id.btn_toggle_layout);
         emptyText = view.findViewById(R.id.empty_text);
         footer = view.findViewById(R.id.gallery_footer);
+        avatarView = view.findViewById(R.id.avatar_view);
+        avatarView.setListener(new AvatarView.Listener() {
+            @Override
+            public void onAvatarJump() {
+                playDing();
+            }
+
+            @Override
+            public void onAvatarLongPress() {
+                confirmRemoveAvatar();
+            }
+        });
+        loadDing();
 
         adapter = new MemoryAdapter(new MemoryAdapter.OnMemoryClickListener() {
             @Override
@@ -92,6 +113,10 @@ public class GalleryFragment extends Fragment {
     @Override
     public void onDestroyView() {
         repository.removeListener(albumListener);
+        if (soundPool != null) {
+            soundPool.release();
+            soundPool = null;
+        }
         super.onDestroyView();
     }
 
@@ -137,8 +162,45 @@ public class GalleryFragment extends Fragment {
         });
     }
 
+    /** Same 8-bit "ding" as the camera shutter, played when the avatar jumps. */
+    private void loadDing() {
+        AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+        soundPool = new SoundPool.Builder()
+                .setMaxStreams(2)
+                .setAudioAttributes(attributes)
+                .build();
+        dingSoundId = soundPool.load(requireContext(), R.raw.snap_ding, 1);
+    }
+
+    private void playDing() {
+        if (soundPool != null && dingSoundId != 0) {
+            soundPool.play(dingSoundId, 1f, 1f, 1, 0, 1f);
+        }
+    }
+
+    private void confirmRemoveAvatar() {
+        Avatar avatar = repository.getAvatar();
+        if (avatar == null) return;
+        new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.avatar_remove_title)
+                .setMessage(R.string.avatar_remove_message)
+                .setPositiveButton(R.string.avatar_remove_yes, (d, which) ->
+                        repository.deleteAvatar(avatar.getId(), ok -> {
+                            if (getContext() == null) return;
+                            Toast.makeText(getContext(),
+                                    Boolean.TRUE.equals(ok) ? R.string.avatar_removed : R.string.avatar_failed,
+                                    Toast.LENGTH_SHORT).show();
+                        }))
+                .setNegativeButton(R.string.delete_confirm_no, null)
+                .show();
+    }
+
     private void refresh() {
         if (getView() == null) return;
+        avatarView.setAvatar(repository.getAvatar());
         int total = repository.size();
         int favorites = repository.favoriteCount();
         List<Memory> items = favoritesOnly ? repository.getFavorites() : repository.getAll();

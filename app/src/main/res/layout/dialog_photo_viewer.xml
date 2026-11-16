@@ -96,6 +96,14 @@
                     style="@style/BitButton"
                     android:text="@string/viewer_close" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/viewer_avatar"
+                style="@style/BitButton"
+                android:layout_width="match_parent"
+                android:layout_marginTop="8dp"
+                android:layout_weight="0"
+                android:text="@string/viewer_make_avatar" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
