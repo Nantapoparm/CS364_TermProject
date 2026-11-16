@@ -29,7 +29,6 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COL_FAVORITE = "is_favorite";
     public static final String COL_IMAGE = "image_base64";
 
-    // [เพิ่ม - ฟีเจอร์อวาตาร์] ตาราง avatars และคอลัมน์ (DB v4)
     public static final String TABLE_AVATARS = "avatars";
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_MEMORY_ID = "memory_id";
@@ -71,7 +70,6 @@ public class DBHelper extends SQLiteOpenHelper {
         this.context = context.getApplicationContext();
     }
 
-    // [เพิ่ม - ฟีเจอร์อวาตาร์] เปิด foreign key ให้ ON DELETE SET NULL ของตาราง avatars ทำงาน
     @Override
     public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
@@ -96,7 +94,6 @@ public class DBHelper extends SQLiteOpenHelper {
         } else if (oldVersion < 3) {
             upgradeFromV2(db);
         }
-        // [เพิ่ม - ฟีเจอร์อวาตาร์] v3 → v4: เพิ่มตาราง avatars โดยไม่แตะข้อมูลรูปเดิม
         if (oldVersion < 4) {
             db.execSQL(SQL_CREATE_AVATARS);
         }

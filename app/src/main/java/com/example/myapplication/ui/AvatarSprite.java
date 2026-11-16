@@ -5,15 +5,9 @@ import android.graphics.Bitmap;
 import androidx.annotation.NonNull;
 
 /**
- * [ใหม่ - ฟีเจอร์อวาตาร์] แปลงส่วนที่ตัดจากรูปให้เป็นตัวละคร chibi พิกเซล
- *
- * <ul>
- *   <li>ย่อส่วนที่ตัดให้สูง 22 พิกเซล (แบบ nearest-neighbor ขอบคม) ใช้เป็นหัว/ลำตัวใหญ่ ๆ</li>
- *   <li>วาดขาสั้น 2 ข้างด้วยโค้ด สีขาดูดจากขอบล่างของส่วนที่ตัด (เช่นสีเสื้อ/กางเกง) แล้วทำให้เข้มขึ้น</li>
- *   <li>ใส่เส้นขอบเข้ม 1 พิกเซลรอบตัว ให้เข้ากับสไตล์ของ {@link Pixelator}</li>
- *   <li>สร้างทุกเฟรมไว้ล่วงหน้า: เดิน 4 เฟรม, ยืนนิ่ง, ย่อตัว (squash), ลอยตัวยืด (stretch)</li>
- *   <li>ทุกเฟรมหันขวา ถ้าจะหันซ้าย {@link AvatarView} จะกลับด้านตอนวาดเอง</li>
- * </ul>
+ * Turns a cut-out photo into a chibi sprite: the cut-out becomes a big head/body,
+ * short pixel legs are drawn by code, and every frame gets a 1-pixel dark outline.
+ * All frames face right and are built once up front; the view mirrors them to face left.
  */
 public final class AvatarSprite {
     private static final int BODY_HEIGHT = 22;

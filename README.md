@@ -161,8 +161,6 @@ app/src/main/res/
 | `gallery/PhotoViewerDialog.java` + `dialog_photo_viewer.xml` | ปุ่ม **★ Make avatar** |
 | `values/strings.xml` | ข้อความของฟีเจอร์ใหม่ |
 
-ในโค้ด จุดที่เพิ่มมีคอมเมนต์ `[ใหม่ - ฟีเจอร์อวาตาร์]` หรือ `[เพิ่ม - ฟีเจอร์อวาตาร์]` กำกับไว้
-
 ## วิธีรันโปรเจกต์
 
 1. ติดตั้ง **Android Studio** เวอร์ชันล่าสุด (มี JDK มาให้แล้ว)

@@ -21,16 +21,7 @@ import com.example.myapplication.ui.AvatarSprite;
 import com.example.myapplication.ui.LassoCutView;
 import com.example.myapplication.ui.Pixelator;
 
-/**
- * [ใหม่ - ฟีเจอร์อวาตาร์] หน้าต่าง {@code avatar.cut} สำหรับตัดคนออกจากรูปในอัลบั้ม
- *
- * <ul>
- *   <li>เปิดจากปุ่ม ★ Make avatar ใน {@code PhotoViewerDialog}</li>
- *   <li>โหลดรูปจากฐานข้อมูล ถ้าเป็นรูป JPEG ใหญ่ (รูปตัวอย่าง) จะย่อเหลือกว้าง 64 พิกเซลก่อน</li>
- *   <li>ให้ผู้ใช้วาดวงรอบตัวใน {@link LassoCutView} แล้วโชว์ตัว chibi ตัวอย่างในช่องเล็ก</li>
- *   <li>ปุ่ม Redraw = วาดใหม่, ปุ่ม Use this = บันทึกลงตาราง {@code avatars} ผ่าน {@link MemoryRepository}</li>
- * </ul>
- */
+/** Cut a person out of an album photo with a finger loop and save it as the album's walking avatar. */
 public class AvatarCutDialog extends DialogFragment {
     private static final String ARG_ID = "memory_id";
     /** Sample photos are full-size JPEGs; shrink them to about the size of a 16 BIT pixel photo. */
