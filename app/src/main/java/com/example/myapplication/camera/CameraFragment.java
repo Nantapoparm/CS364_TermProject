@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.SoundPool;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -100,6 +102,9 @@ public class CameraFragment extends Fragment {
     private TextView[] bitButtons;
     @Nullable
     private Animation blink;
+    @Nullable
+    private SoundPool soundPool;
+    private int shutterSoundId;
 
     private final ActivityResultLauncher<String> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
@@ -165,6 +170,7 @@ public class CameraFragment extends Fragment {
         repository.addListener(albumListener);
         refreshAlbumInfo();
         startLiveBlink();
+        loadShutterSound();
     }
 
     @Override
@@ -199,6 +205,10 @@ public class CameraFragment extends Fragment {
         stopCamera();
         cameraExecutor.shutdown();
         if (blink != null) blink.cancel();
+        if (soundPool != null) {
+            soundPool.release();
+            soundPool = null;
+        }
         super.onDestroyView();
     }
 
@@ -410,6 +420,7 @@ public class CameraFragment extends Fragment {
         frozenUntil = SystemClock.uptimeMillis() + FREEZE_MS;
         PhotoViews.show(viewfinderImage, shot);
         playFlash();
+        playShutterSound();
 
         pendingSaves++;
         repository.addPhoto(shot, saved -> {
@@ -427,6 +438,25 @@ public class CameraFragment extends Fragment {
             latest.loadInto(recentThumb);
         } else {
             PhotoViews.showPlaceholder(recentThumb);
+        }
+    }
+
+    /** Loads the short 8-bit "ding" once so each shot plays it without delay. */
+    private void loadShutterSound() {
+        AudioAttributes attributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+        soundPool = new SoundPool.Builder()
+                .setMaxStreams(2)
+                .setAudioAttributes(attributes)
+                .build();
+        shutterSoundId = soundPool.load(requireContext(), R.raw.snap_ding, 1);
+    }
+
+    private void playShutterSound() {
+        if (soundPool != null && shutterSoundId != 0) {
+            soundPool.play(shutterSoundId, 1f, 1f, 1, 0, 1f);
         }
     }
 
