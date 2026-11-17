@@ -21,13 +21,18 @@ import java.util.Calendar;
 public class DBHelper extends SQLiteOpenHelper {
     public static final String DB_NAME = "pixel_snap.db";
 
-    public static final int DB_VERSION = 3;
+    public static final int DB_VERSION = 4;
 
     public static final String TABLE_MEMORIES = "memories";
     public static final String COL_ID = "_id";
     public static final String COL_TAKEN_AT = "taken_at";
     public static final String COL_FAVORITE = "is_favorite";
     public static final String COL_IMAGE = "image_base64";
+
+    public static final String TABLE_AVATARS = "avatars";
+    public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_MEMORY_ID = "memory_id";
+    public static final String COL_SPRITE = "sprite_base64";
 
     private static final String INDEX_TAKEN_AT = "idx_memories_taken_at";
 
@@ -40,6 +45,14 @@ public class DBHelper extends SQLiteOpenHelper {
 
     private static final String SQL_CREATE_INDEX =
             "CREATE INDEX " + INDEX_TAKEN_AT + " ON " + TABLE_MEMORIES + " (" + COL_TAKEN_AT + " DESC)";
+
+    /** One cut-out avatar. If its source photo is deleted, memory_id becomes NULL and the avatar stays. */
+    private static final String SQL_CREATE_AVATARS =
+            "CREATE TABLE " + TABLE_AVATARS + " ("
+                    + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    + COL_CREATED_AT + " INTEGER NOT NULL, "
+                    + COL_MEMORY_ID + " INTEGER REFERENCES " + TABLE_MEMORIES + "(" + COL_ID + ") ON DELETE SET NULL, "
+                    + COL_SPRITE + " TEXT NOT NULL)";
 
     private static final Sample[] SAMPLES = {
             new Sample("sample_daisy", R.raw.sample_daisy, 14, 9, 41, true),
@@ -58,9 +71,17 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        // SQLite leaves foreign keys off by default; ON DELETE SET NULL needs them on.
+        db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_MEMORIES);
         db.execSQL(SQL_CREATE_INDEX);
+        db.execSQL(SQL_CREATE_AVATARS);
         for (Sample s : SAMPLES) {
             insert(db, s.takenAt(), s.favorite, readRaw(s.rawRes));
         }
@@ -72,6 +93,9 @@ public class DBHelper extends SQLiteOpenHelper {
             upgradeFromV1(db);
         } else if (oldVersion < 3) {
             upgradeFromV2(db);
+        }
+        if (oldVersion < 4) {
+            db.execSQL(SQL_CREATE_AVATARS);
         }
     }
 

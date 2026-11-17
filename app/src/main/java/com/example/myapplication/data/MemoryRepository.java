@@ -22,10 +22,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.example.myapplication.data.DBHelper.COL_CREATED_AT;
 import static com.example.myapplication.data.DBHelper.COL_FAVORITE;
 import static com.example.myapplication.data.DBHelper.COL_ID;
 import static com.example.myapplication.data.DBHelper.COL_IMAGE;
+import static com.example.myapplication.data.DBHelper.COL_MEMORY_ID;
+import static com.example.myapplication.data.DBHelper.COL_SPRITE;
 import static com.example.myapplication.data.DBHelper.COL_TAKEN_AT;
+import static com.example.myapplication.data.DBHelper.TABLE_AVATARS;
 import static com.example.myapplication.data.DBHelper.TABLE_MEMORIES;
 
 public final class MemoryRepository {
@@ -48,6 +52,8 @@ public final class MemoryRepository {
     private final List<Memory> memories = new ArrayList<>();
     private final List<Listener> listeners = new ArrayList<>();
     private boolean loaded;
+    @Nullable
+    private Avatar avatar;
 
     private final LruCache<Long, Bitmap> imageCache =
             new LruCache<Long, Bitmap>((int) Math.min(Runtime.getRuntime().maxMemory() / 8, 32L * 1024 * 1024)) {
@@ -69,9 +75,11 @@ public final class MemoryRepository {
         dbHelper = new DBHelper(appContext);
         dbExecutor.execute(() -> {
             List<Memory> rows = queryAll();
+            Avatar latestAvatar = queryLatestAvatar();
             mainHandler.post(() -> {
                 memories.clear();
                 memories.addAll(rows);
+                avatar = latestAvatar;
                 loaded = true;
                 notifyChanged();
             });
@@ -222,6 +230,71 @@ public final class MemoryRepository {
                 if (ok) notifyChanged();
             });
         });
+    }
+
+    /** The newest avatar, or null if none has been made yet. */
+    @MainThread
+    @Nullable
+    public Avatar getAvatar() {
+        return avatar;
+    }
+
+    @MainThread
+    public void saveAvatar(@NonNull Bitmap cutOut, long memoryId, @NonNull Callback<Avatar> callback) {
+        long createdAt = System.currentTimeMillis();
+        dbExecutor.execute(() -> {
+            long id = insertAvatar(cutOut, memoryId, createdAt);
+            mainHandler.post(() -> {
+                if (id == -1) {
+                    callback.onResult(null);
+                    return;
+                }
+                avatar = new Avatar(id, createdAt, cutOut);
+                callback.onResult(avatar);
+                notifyChanged();
+            });
+        });
+    }
+
+    /** Deletes one avatar; the next newest one (if any) takes its place. */
+    @MainThread
+    public void deleteAvatar(long id, @NonNull Callback<Boolean> callback) {
+        dbExecutor.execute(() -> {
+            boolean ok = dbHelper.getWritableDatabase().delete(TABLE_AVATARS,
+                    COL_ID + " = ?", new String[]{String.valueOf(id)}) > 0;
+            Avatar next = queryLatestAvatar();
+            mainHandler.post(() -> {
+                avatar = next;
+                callback.onResult(ok);
+                notifyChanged();
+            });
+        });
+    }
+
+    @WorkerThread
+    @Nullable
+    private Avatar queryLatestAvatar() {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        try (Cursor c = db.query(TABLE_AVATARS, new String[]{COL_ID, COL_CREATED_AT, COL_SPRITE},
+                null, null, null, null, COL_CREATED_AT + " DESC", "1")) {
+            if (!c.moveToFirst()) return null;
+            byte[] bytes = DBHelper.decodeImage(c.getString(2));
+            Bitmap sprite = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            return sprite == null ? null : new Avatar(c.getLong(0), c.getLong(1), sprite);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    @WorkerThread
+    private long insertAvatar(Bitmap cutOut, long memoryId, long createdAt) {
+        ByteArrayOutputStream png = new ByteArrayOutputStream();
+        if (!cutOut.compress(Bitmap.CompressFormat.PNG, 100, png)) return -1;
+        ContentValues values = new ContentValues();
+        values.put(COL_CREATED_AT, createdAt);
+        values.put(COL_MEMORY_ID, memoryId);
+        values.put(COL_SPRITE, DBHelper.encodeImage(png.toByteArray()));
+        return dbHelper.getWritableDatabase().insert(TABLE_AVATARS, null, values);
     }
 
     @WorkerThread

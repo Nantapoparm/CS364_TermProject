@@ -20,6 +20,7 @@
 - ซูม 1× / 2× / 3× (ซูมจริงของกล้อง)
 - สลับกล้องหน้า/หลัง กล้องหน้าแสดงภาพกลับซ้ายขวาเหมือนส่องกระจก
 - กดถ่ายแล้วมีแฟลช ภาพค้างให้เห็นครู่หนึ่ง และบันทึกลงอัลบั้มทันที
+- มีเสียง "ติ้ง" แบบเกมพิกเซลตอนกดถ่าย ดังตามปุ่มระดับเสียงสื่อ
 - ตัวนับจำนวนรูป (สูงสุด 99 รูป) และปุ่มรูปล่าสุด กดแล้วไปหน้าอัลบั้ม
 
 **หน้าอัลบั้ม**
@@ -28,6 +29,14 @@
 - แตะรูป = กดถูกใจหรือยกเลิก
 - กดค้างที่รูป = เปิดดูรูปใหญ่ ซึ่งกดถูกใจหรือลบรูปได้ (มีหน้าต่างยืนยันก่อนลบ)
 - มีภาพตัวอย่าง 6 รูปจากงานออกแบบติดมาให้ตั้งแต่ติดตั้ง
+
+**อวาตาร์ตัวจิ๋ว (chibi)**
+- ในหน้าดูรูปใหญ่ กด **★ Make avatar** แล้วใช้นิ้ววาดวงรอบตัวคนในรูปเพื่อตัดออกจากพื้นหลัง (`avatar.cut`)
+- แอปต่อขาพิกเซลสั้น ๆ ให้ แล้วตัวละครจะเดินเล่นไปมาบนหน้าอัลบั้ม หยุดยืนเป็นพัก ๆ และหันกลับเมื่อถึงขอบ
+- แตะตัวละคร = กระโดด (ย่อตัว → ลอยตัวยืด → ลงพื้น) พร้อมเสียงติ้ง
+- กดค้างที่ตัวละคร = ลบอวาตาร์ (มีหน้าต่างยืนยัน)
+- แตะตรงที่ไม่โดนตัวละครจะทะลุไปถึงการ์ดรูปข้างล่าง ใช้งานอัลบั้มได้ตามปกติ
+- ไม่ใช้ ML หรือไลบรารีเพิ่ม: ตัดรูปด้วยการเติมสี `Path` ลง mask ขนาดเท่ารูปพิกเซล ทำให้ขอบเป็นขั้นบันไดพิกเซลเอง
 
 ## เทคโนโลยีที่ใช้
 
@@ -62,7 +71,7 @@ CameraX ส่งภาพจากกล้อง (ประมาณ 640×480)
 
 ## ฐานข้อมูล
 
-ไฟล์ `pixel_snap.db` (เวอร์ชัน 3) มีตารางเดียว
+ไฟล์ `pixel_snap.db` (เวอร์ชัน 4) มี 2 ตาราง
 
 ```sql
 CREATE TABLE memories (
@@ -72,7 +81,17 @@ CREATE TABLE memories (
     image_base64 TEXT    NOT NULL             -- ไฟล์รูป (PNG/JPEG) แปลงเป็น Base64
 );
 CREATE INDEX idx_memories_taken_at ON memories (taken_at DESC);
+
+CREATE TABLE avatars (
+    _id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at    INTEGER NOT NULL,           -- เวลาสร้าง (มิลลิวินาที)
+    memory_id     INTEGER REFERENCES memories(_id) ON DELETE SET NULL,  -- รูปต้นฉบับ
+    sprite_base64 TEXT    NOT NULL            -- ส่วนที่ตัดแล้ว (PNG โปร่งใส) แปลงเป็น Base64
+);
 ```
+
+- **ตาราง `avatars`:** เก็บแค่ส่วนที่ตัดออกมา ส่วนขาและเฟรมเดิน/กระโดดสร้างใหม่จากโค้ดตอนโหลด หน้าอัลบั้มแสดงตัวล่าสุด (`ORDER BY created_at DESC LIMIT 1`)
+  - เปิด foreign key ใน `DBHelper.onConfigure()` ถ้าลบรูปต้นฉบับ `memory_id` จะกลายเป็น `NULL` แต่ตัวละครยังอยู่
 
 - **การเก็บรูป:** แปลงรูปเป็นข้อความ ASCII ด้วย Base64 ก่อนบันทึก และแปลงกลับตอนแสดงผล ทุกภาพในแอปดึงจากฐานข้อมูล
 - **CRUD อยู่ใน `MemoryRepository`:**
@@ -80,7 +99,8 @@ CREATE INDEX idx_memories_taken_at ON memories (taken_at DESC);
   - SELECT: แสดงอัลบั้มและรูป
   - UPDATE: กดถูกใจ
   - DELETE: ลบรูป
-- **การอัปเกรด:** `DBHelper.onUpgrade()` ย้ายข้อมูลจากฐานข้อมูลเวอร์ชันเก่าให้อัตโนมัติ รูปของผู้ใช้ไม่หาย
+  - อวาตาร์: INSERT ตอนกด Use this, SELECT ตอนเปิดแอป, DELETE ตอนกดค้างที่ตัวละคร
+- **การอัปเกรด:** `DBHelper.onUpgrade()` ย้ายข้อมูลจากฐานข้อมูลเวอร์ชันเก่าให้อัตโนมัติ รูปของผู้ใช้ไม่หาย (v3 → v4 เพิ่มตาราง `avatars`)
 
 ## โครงสร้างโปรเจกต์
 
@@ -92,23 +112,54 @@ app/src/main/java/com/example/myapplication/
 ├── gallery/
 │   ├── GalleryFragment.java    หน้าอัลบั้ม: แท็บ, กริด/รายการ, ถูกใจ
 │   ├── MemoryAdapter.java      การ์ดรูปใน RecyclerView
-│   └── PhotoViewerDialog.java  หน้าต่างดูรูปใหญ่ (ถูกใจ / ลบ)
+│   └── PhotoViewerDialog.java  หน้าต่างดูรูปใหญ่ (ถูกใจ / ลบ / สร้างอวาตาร์)
+├── avatar/
+│   └── AvatarCutDialog.java    หน้าตัดรูปด้วยนิ้ว + ตัวอย่างอวาตาร์
 ├── data/
 │   ├── DBHelper.java           SQLiteOpenHelper: สร้างตาราง, ข้อมูลตั้งต้น, อัปเกรด, Base64
 │   ├── MemoryRepository.java   อ่าน/เขียนฐานข้อมูล (CRUD) + แคชรูป
-│   └── Memory.java             ข้อมูลรูป 1 แถว
+│   ├── Memory.java             ข้อมูลรูป 1 แถว
+│   └── Avatar.java             ข้อมูลอวาตาร์ 1 แถว
 └── ui/
     ├── Pixelator.java          ฟิลเตอร์พิกเซลการ์ตูน
     ├── PhotoViews.java         แสดงรูปพิกเซลแบบขอบคม / ภาพว่าง
+    ├── LassoCutView.java       วาดวงด้วยนิ้ว → mask → ตัดรูป
+    ├── AvatarSprite.java       ต่อขา + สร้างเฟรมเดิน / ย่อตัว / ลอยตัว
+    ├── AvatarView.java         ตัวละครเดินบนอัลบั้ม (state machine, การแตะ)
     ├── PixelFont.java          ฟอนต์พิกเซล
     └── GridBackgroundDrawable.java  พื้นหลังลายตาราง
 
 app/src/main/res/
-├── layout/   activity_main, fragment_camera, fragment_gallery, item_memory, dialog_photo_viewer
+├── layout/   activity_main, fragment_camera, fragment_gallery, item_memory, dialog_photo_viewer, dialog_avatar_cut
 ├── drawable/ กรอบหน้าต่าง ปุ่ม และไอคอนแบบเรโทร (vector / shape)
 ├── font/     Silkscreen (หัวข้อ), Pixelify Sans (ข้อความ)
 └── raw/      ภาพตัวอย่าง 6 รูป (ใส่ลงฐานข้อมูลตอนติดตั้ง)
 ```
+
+## สิ่งที่เพิ่มในฟีเจอร์อวาตาร์ (branch `walk`)
+
+เพิ่มเสียงชัตเตอร์ (จาก branch `soundAdd`) และอวาตาร์ chibi ที่เดินเล่นบนหน้าอัลบั้ม
+
+**ไฟล์ใหม่**
+
+| ไฟล์ | ทำอะไร |
+|---|---|
+| `avatar/AvatarCutDialog.java` | หน้าต่าง `avatar.cut`: โหลดรูป ให้วาดวงตัด โชว์ตัวอย่าง แล้วบันทึก |
+| `ui/LassoCutView.java` | วาดวงด้วยนิ้ว → เทลง mask ขนาดเท่ารูปพิกเซล → ตัดและครอปให้พอดีตัว |
+| `ui/AvatarSprite.java` | ย่อส่วนที่ตัดให้สูง 22 px, วาดขา, ใส่เส้นขอบ, สร้างเฟรมเดิน 4 เฟรม / ยืน / ย่อตัว / ลอยตัว |
+| `ui/AvatarView.java` | ชั้นโปร่งใสทับอัลบั้ม: state machine เดิน ⇄ ยืน, แตะ = กระโดด, กดค้าง = ลบ, หยุดเองเมื่อซ่อนแท็บ |
+| `data/Avatar.java` | ข้อมูลอวาตาร์ 1 แถว |
+| `res/layout/dialog_avatar_cut.xml` | หน้าตาหน้าต่างตัดรูป |
+
+**ไฟล์ที่แก้**
+
+| ไฟล์ | แก้อะไร |
+|---|---|
+| `data/DBHelper.java` | DB v4: ตาราง `avatars`, เปิด foreign key ใน `onConfigure()`, `onUpgrade()` จาก v3 |
+| `data/MemoryRepository.java` | `getAvatar()` / `saveAvatar()` / `deleteAvatar()` บน background thread และโหลดอวาตาร์ตอนเปิดแอป |
+| `gallery/GalleryFragment.java` + `fragment_gallery.xml` | วาง `AvatarView` ทับรายการรูป, เสียงติ้งตอนกระโดด, หน้าต่างยืนยันการลบ |
+| `gallery/PhotoViewerDialog.java` + `dialog_photo_viewer.xml` | ปุ่ม **★ Make avatar** |
+| `values/strings.xml` | ข้อความของฟีเจอร์ใหม่ |
 
 ## วิธีรันโปรเจกต์
 
