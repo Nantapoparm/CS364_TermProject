@@ -14,6 +14,8 @@
     <string name="switch_camera">Switch</string>
     <string name="shot_counter">%1$03d / %2$03d</string>
     <string name="zoom_level">%1$d×</string>
+    <string name="game_boy_short">GB</string>
+    <string name="game_boy_mode">Game Boy color mode</string>
     <string name="saved_to_album">Saved to album</string>
     <string name="album_full">Album is full</string>
     <string name="camera_permission_needed">Camera access is needed\nto take pixel photos</string>

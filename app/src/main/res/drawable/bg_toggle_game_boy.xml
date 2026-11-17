@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GB toggle on the viewfinder: cream box when off, Game Boy screen green when on. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_selected="true">
+        <shape>
+            <solid android:color="#FF9BBC0F" />
+            <stroke android:width="@dimen/border_thin" android:color="#FF0F380F" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/bg_box" />
+</selector>

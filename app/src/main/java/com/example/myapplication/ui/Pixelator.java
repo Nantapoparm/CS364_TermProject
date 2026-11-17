@@ -52,6 +52,17 @@ public final class Pixelator {
 
     public static final Style STYLE_32_BIT = new Style(96, PALETTE_33, 68);
 
+    /** The four greens of the original Game Boy screen, darkest first. */
+    private static final int[] GAME_BOY = {0xFF0F380F, 0xFF306230, 0xFF8BAC0F, 0xFF9BBC0F};
+
+    /** 4×4 Bayer matrix (values 0..15) for ordered dithering between the four greens. */
+    private static final int[] BAYER_4 = {
+            0, 8, 2, 10,
+            12, 4, 14, 6,
+            3, 11, 1, 9,
+            15, 7, 13, 5,
+    };
+
     private int[] bigPixels = new int[0];
     private int[] smoothPixels = new int[0];
     private int[] smallPixels = new int[0];
@@ -63,7 +74,7 @@ public final class Pixelator {
     private final int[] paletteCache = new int[1 << 15];
     private int[] cachedPalette;
 
-    public Bitmap render(Bitmap frame, int rotation, boolean mirror, Style style) {
+    public Bitmap render(Bitmap frame, int rotation, boolean mirror, Style style, boolean gameBoy) {
         boolean sideways = rotation % 180 != 0;
         int uprightW = sideways ? frame.getHeight() : frame.getWidth();
         int uprightH = sideways ? frame.getWidth() : frame.getHeight();
@@ -84,7 +95,11 @@ public final class Pixelator {
         smallPixels = ensure(smallPixels, w * h);
         halve(smoothPixels, bw, bh, smallPixels);
 
-        cartoonColors(smallPixels, w, h, style);
+        if (gameBoy) {
+            gameBoyColors(smallPixels, w, h, style);
+        } else {
+            cartoonColors(smallPixels, w, h, style);
+        }
 
         Bitmap small = Bitmap.createBitmap(smallPixels, 0, w, w, h, Bitmap.Config.ARGB_8888);
         if (rotation == 0 && !mirror) return small;
@@ -206,6 +221,44 @@ public final class Pixelator {
         }
         for (int i = 0; i < n; i++) {
             if (outline[i]) px[i] = OUTLINE;
+        }
+    }
+
+    /**
+     * Game Boy mode: colour is ignored and each pixel is mapped by brightness onto the four
+     * greens. A Bayer pattern nudges the brightness first so smooth gradients (sky, cheeks)
+     * become a checker of two neighbouring greens instead of hard bands. No despeckle here,
+     * because it would erase the single dither dots on purpose.
+     */
+    private void gameBoyColors(int[] px, int w, int h, Style style) {
+        int n = w * h;
+        smallLuma = ensure(smallLuma, n);
+        outline = ensure(outline, n);
+
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int i = y * w + x;
+                int c = px[i];
+                int l = (((c >> 16) & 0xFF) * 299 + ((c >> 8) & 0xFF) * 587 + (c & 0xFF) * 114) / 1000;
+                smallLuma[i] = l;
+
+                // Bayer offset spans one band (256 / 4 = 64): -30 .. +30.
+                int v = clamp(contrast(l) + BAYER_4[(y & 3) * 4 + (x & 3)] * 4 - 30);
+                px[i] = GAME_BOY[Math.min(3, v >> 6)];
+                outline[i] = false;
+            }
+        }
+
+        int t = style.outlineThreshold;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int i = y * w + x;
+                if (x + 1 < w) markEdge(i, i + 1, t);
+                if (y + 1 < h) markEdge(i, i + w, t);
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            if (outline[i]) px[i] = GAME_BOY[0];
         }
     }
 

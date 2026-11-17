@@ -54,6 +54,7 @@ public class CameraFragment extends Fragment {
     private static final String KEY_BIT = "bit_index";
     private static final String KEY_ZOOM = "zoom";
     private static final String KEY_FRONT = "front_camera";
+    private static final String KEY_GAME_BOY = "game_boy";
 
     private static final Pixelator.Style[] STYLES = {
             Pixelator.STYLE_8_BIT, Pixelator.STYLE_16_BIT, Pixelator.STYLE_32_BIT};
@@ -67,6 +68,7 @@ public class CameraFragment extends Fragment {
 
     private int bitIndex = 1;
     private volatile Pixelator.Style style = STYLES[1];
+    private volatile boolean gameBoy = false;
 
     private final Pixelator pixelator = new Pixelator();
     private int zoom = 1;
@@ -92,6 +94,7 @@ public class CameraFragment extends Fragment {
     private View flashOverlay;
     private View liveDot;
     private TextView zoomButton;
+    private TextView gameBoyButton;
     private TextView shotCounter;
     private ImageView recentThumb;
     private TextView[] bitButtons;
@@ -123,6 +126,7 @@ public class CameraFragment extends Fragment {
             bitIndex = savedInstanceState.getInt(KEY_BIT, bitIndex);
             zoom = savedInstanceState.getInt(KEY_ZOOM, zoom);
             useFrontCamera = savedInstanceState.getBoolean(KEY_FRONT, useFrontCamera);
+            gameBoy = savedInstanceState.getBoolean(KEY_GAME_BOY, gameBoy);
         }
 
         viewfinderImage = view.findViewById(R.id.viewfinder_image);
@@ -131,6 +135,7 @@ public class CameraFragment extends Fragment {
         flashOverlay = view.findViewById(R.id.flash_overlay);
         liveDot = view.findViewById(R.id.live_dot);
         zoomButton = view.findViewById(R.id.btn_zoom);
+        gameBoyButton = view.findViewById(R.id.btn_game_boy);
         shotCounter = view.findViewById(R.id.shot_counter);
         recentThumb = view.findViewById(R.id.recent_thumb);
         bitButtons = new TextView[]{
@@ -144,6 +149,7 @@ public class CameraFragment extends Fragment {
             bitButtons[i].setOnClickListener(v -> selectBit(index));
         }
         zoomButton.setOnClickListener(v -> nextZoom());
+        gameBoyButton.setOnClickListener(v -> setGameBoy(!gameBoy));
         view.findViewById(R.id.btn_shutter).setOnClickListener(v -> takePhoto());
         view.findViewById(R.id.btn_header_camera).setOnClickListener(v -> takePhoto());
         view.findViewById(R.id.btn_switch_camera).setOnClickListener(v -> switchCamera());
@@ -154,6 +160,7 @@ public class CameraFragment extends Fragment {
 
         PhotoViews.showPlaceholder(viewfinderImage);
         selectBit(bitIndex);
+        setGameBoy(gameBoy);
         updateZoomLabel();
         repository.addListener(albumListener);
         refreshAlbumInfo();
@@ -183,6 +190,7 @@ public class CameraFragment extends Fragment {
         outState.putInt(KEY_BIT, bitIndex);
         outState.putInt(KEY_ZOOM, zoom);
         outState.putBoolean(KEY_FRONT, useFrontCamera);
+        outState.putBoolean(KEY_GAME_BOY, gameBoy);
     }
 
     @Override
@@ -307,7 +315,7 @@ public class CameraFragment extends Fragment {
         try {
             Bitmap full = frameToBitmap(frame);
             int rotation = frame.getImageInfo().getRotationDegrees();
-            pixel = pixelator.render(full, rotation, useFrontCamera, style);
+            pixel = pixelator.render(full, rotation, useFrontCamera, style, gameBoy);
         } finally {
             frame.close();
         }
@@ -340,6 +348,12 @@ public class CameraFragment extends Fragment {
         for (int i = 0; i < bitButtons.length; i++) {
             bitButtons[i].setSelected(i == index);
         }
+    }
+
+    /** Toggles the 4-green Game Boy palette; works together with any 8/16/32 BIT size. */
+    private void setGameBoy(boolean on) {
+        gameBoy = on;
+        gameBoyButton.setSelected(on);
     }
 
     private void nextZoom() {
